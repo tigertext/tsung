@@ -31,7 +31,7 @@ connect(Socket, Opts) ->
     connect(Socket, Opts, infinity).
 
 
-opts_to_tcp_opts(Opts) -> Opts.
+opts_to_tcp_opts(Opts) -> [{send_timeout, 3000}|Opts].
 
 %% send/3 -> ok | {error, Reason}
 send(Socket, Data, _Opts)  ->

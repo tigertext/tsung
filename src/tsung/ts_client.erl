@@ -164,7 +164,13 @@ wait_ack(next_msg,State=#state_rcv{request=R}) when R#ts_request.ack==global->
     {PageTimeStamp, _, _} = update_stats(State),
     handle_next_action(State#state_rcv{socket=NewSocket,
                                        page_timestamp=PageTimeStamp});
-wait_ack(timeout,State) ->
+wait_ack(timeout,State=#state_rcv{request=R}) when R#ts_request.ack == parse ->
+    ?LOGF("request ~p timeout receive in state wait_ack~n", [R], ?DEB),
+    %% request times out, ignore it and continue
+    (State#state_rcv.protocol):close(State#state_rcv.socket),
+    set_connected_status(false),
+    handle_next_action(State#state_rcv{socket=none});
+wait_ack(timeout, State) ->
     ?LOG("Error: timeout receive in state wait_ack~n", ?ERR),
     ts_mon:add({ count, error_timeout }),
     {stop, normal, State}.
@@ -839,7 +845,7 @@ handle_next_request(Request, State) ->
                             ts_timer:connected(self()),
                             {next_state, wait_ack, NewState};
                         _ ->
-                            {next_state, wait_ack, NewState}
+                            {next_state, wait_ack, NewState, (NewState#state_rcv.proto_opts)#proto_opts.idle_timeout}
                         end;
                 {error, closed} when State#state_rcv.retries < ProtoOpts#proto_opts.max_retries ->
                     ?LOG("connection close while sending message!~n", ?NOTICE),
@@ -1111,7 +1117,6 @@ handle_data_msg(Data, State=#state_rcv{request=Req}) when Req#ts_request.ack==no
 handle_data_msg(Data,State=#state_rcv{dump=Dump,request=Req,id=Id,clienttype=Type,maxcount=MaxCount,transactions=Transactions})
   when Req#ts_request.ack==parse->
     ts_mon:rcvmes({Dump, self(), Data}),
-
     {NewState, Opts, Close} = Type:parse(Data, State),
     NewBuffer=set_new_buffer(NewState, Data),
 

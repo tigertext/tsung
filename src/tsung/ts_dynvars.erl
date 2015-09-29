@@ -81,6 +81,8 @@ lookup(Key, DynVars, Default) when ?IS_DYNVARS(DynVars), is_atom(Key)->
 
 %% @spec set(Key::atom(), Value::term(), DynVars::dynvars()) -> dynvars()
 set(Key,Value,DynVars) when ?IS_DYNVARS(DynVars),is_atom(Key) ->
+    %% plugin message id recording for valiation
+    tt_utils:store_for_validation(Key, Value),
     merge([{Key, Value}],DynVars);
 
 %% optimization: only one key and one value

@@ -346,6 +346,7 @@ handle_cast({rcvmsg, Who, When, What}, State=#state{type=full,dumpfile=Log}) ->
 
 handle_cast({stop}, State = #state{client=0, launchers=1, timer_ref=TRef}) ->
     ?LOG("Stop asked, no more users, last launcher stopped, OK to stop~n", ?INFO),
+    tt_utils:start_post_test_auditing(),
     case ?config(keep_web_gui) of
         true ->
             io:format(standard_io,"All slaves have stopped; keep controller and web dashboard alive. ~nHit CTRL-C or click Stop on the dashboard to stop.~n",[]),

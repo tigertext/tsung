@@ -53,6 +53,7 @@ handle_cast({msg, Msg_Id}, #state{msgs=Msgs, id=Id} = State) ->
 handle_cast(flush, #state{msgs=Msgs, id=Id} = State) ->
    ?LOGF("got flush at ~p~n", [Id], ?DEB),
    flush_msgs(Msgs, State#state.file),
+   file:sync(State#state.file),
    {noreply, State#state{msgs=[]}}.
 
 handle_call(Call, _From, State) ->

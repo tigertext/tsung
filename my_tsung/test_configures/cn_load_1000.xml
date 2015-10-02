@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE tsung SYSTEM "/Users/gye/tt_dev/gye.tsung/my_tsung/share/tsung/tsung-1.0.dtd">
 <! -- 1000 users, 100 login per sec, 500 message per sec -->
-<tsung loglevel="debug" dumptraffic="true"  version="1.0">
+<tsung loglevel="info" dumptraffic="false"  version="1.0">
 
   <!-- Client side setup -->
   <clients>

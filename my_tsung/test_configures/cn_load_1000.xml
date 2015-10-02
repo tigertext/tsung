@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+<!DOCTYPE tsung SYSTEM "/Users/gye/tt_dev/gye.tsung/my_tsung/share/tsung/tsung-1.0.dtd">
+<! -- 1000 users, 100 login per sec, 500 message per sec -->
+<tsung loglevel="debug" dumptraffic="true"  version="1.0">
+
+  <!-- Client side setup -->
+  <clients>
+    <client host="localhost" use_controller_vm="true" maxusers="10000"/>
+  </clients>
+  
+  <!-- Server side setup -->
+<servers>
+  <server host="perf-console.tigertext.me" port="443" type="ssl"></server>
+</servers>
+
+  <!-- to start os monitoring (cpu, network, memory). Use an erlang
+  agent on the remote machine or SNMP. erlang is the default --> 
+  
+  <load>
+  <!-- several arrival phases can be set: for each phase, you can set
+  the mean inter-arrival time between new clients and the phase
+  duration -->
+   <arrivalphase phase="1" duration="60" unit="minute">
+     <users maxnumber="1000" arrivalrate="100" unit="second"></users>
+   </arrivalphase>
+  </load>
+
+  <options>
+   <option name="file_server" id="accounts" value="/tmp/perf_test_accounts.csv"></option>
+   <option name="file_server" id="message_receivers" value="/tmp/perf_test_tokens.csv"></option>
+   <option type="ts_http" name="user_agent">
+    <user_agent probability="100">Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36</user_agent>
+   </option>
+   <option name="connect_timeout" value="2000" />
+   <option name="max_retries" value="1" />
+   <option name="retry_timeout" value="1000" />
+   <option name="idle_timeout" value="30000"/>
+  </options>
+
+  <!-- start a session for a http user. the probability is the
+  frequency of this type os session. The sum of all session's
+  probabilities must be 100 -->
+ <!-- define 2 session, one with long poll and without long poll but messaging -->
+ <sessions>
+  <session name="login_no_poll" probability="50" type="ts_http">
+     <setdynvars sourcetype="file" fileid="accounts" delimiter=";" order="iter">
+        <var name="username" />
+        <var name="password" />
+     </setdynvars>
+
+     <setdynvars sourcetype="value" value="25c06c5e-dfde-4d8b-961f-faa3f23b3d7b">
+       <var name="messaging_org" />
+     </setdynvars>
+     <!-- default message ttl 5 days -->
+     <setdynvars sourcetype="value" value="7200">
+       <var name="ttl" />
+     </setdynvars>
+     <!-- default search term -->
+     <setdynvars sourcetype="value" value="perf">
+       <var name="search_term" />
+     </setdynvars>
+    
+    <!-- Login to get session_id and cn_server -->
+    <request subst="true">
+        <dyn_variable name="session_id" jsonpath="session_id"></dyn_variable>
+        <dyn_variable name="cn_server" jsonpath="cn_server"></dyn_variable>
+        <dyn_variable name="my_token" jsonpath="account_token"></dyn_variable>
+       <http url="%%tt_utils:login_url%%" method="GET" version="1.1"></http> 
+    </request>
+
+    <!-- GET account_setting -->
+    <request subst="true">
+       <http url="/cn%%_cn_server%%/account_settings?session_id=%%_session_id%%" method="GET" version="1.1">
+       </http>
+    </request>    
+    
+    <!-- GET roster -->
+    <request subst="true">
+       <http url="/cn%%_cn_server%%/roster?session_id=%%_session_id%%" method="GET" version="1.1">
+       </http>
+    </request> 
+
+    <!-- First poll with watermark 0 -->
+    <request subst="true">
+        <dyn_variable name="poll_response" jsonpath="" />
+        <http url="/cn%%_cn_server%%/poll?touch=1200" method="POST" version="1.1"
+              contents="session_id=%%_session_id%%&amp;watermark=0"
+              content_type="application/x-www-form-urlencoded"
+              >
+        </http>       
+    </request> 
+
+    <!-- do search, post messages in a loop -->
+    <for from="1" to ="1000" incr="1" var="counter">
+        <request subst="true">
+            <http url="/cn/devapi/v1/search?session_id=%%_session_id%%&amp;session_org=undefined" method="POST"
+                version="1.1"
+                content_type="application/json"
+                contents="%%tt_utils:search_account%%">
+            </http>
+        </request>     
+        <request subst="true">
+            <http url="/cn/devapi/v1/search?session_id=%%_session_id%%&amp;session_org=undefined" method="POST"
+                version="1.1"
+                content_type="application/json"
+                contents="%%tt_utils:search_group%%">
+            </http>
+        </request>     
+        <request subst="true">
+            <http url="/cn/devapi/v1/search?session_id=%%_session_id%%&amp;session_org=undefined" method="POST"
+                version="1.1"
+                content_type="application/json"
+                contents="%%tt_utils:search_dist_list%%">
+            </http>
+        </request>     
+        <request subst="true">
+            <dyn_variable name="message_id" jsonpath="message.client_id" />
+            <http url="%%tt_utils:message_url%%" method="GET" version="1.1">
+        </http>
+        </request> 
+        <!-- pause a second for next run -->
+        <thinktime value="1" ></thinktime>
+    </for>
+  </session>
+  <session name="login_with_poll" probability="50" type="ts_http">
+     <setdynvars sourcetype="file" fileid="accounts" delimiter=";" order="iter">
+        <var name="username" />
+        <var name="password" />
+     </setdynvars>
+
+     <setdynvars sourcetype="value" value="25c06c5e-dfde-4d8b-961f-faa3f23b3d7b">
+       <var name="messaging_org" />
+     </setdynvars>
+     <!-- default message ttl 5 days -->
+     <setdynvars sourcetype="value" value="7200">
+       <var name="ttl" />
+     </setdynvars>
+     <!-- default search term -->
+     <setdynvars sourcetype="value" value="perf">
+       <var name="search_term" />
+     </setdynvars>
+    
+    <!-- Login to get session_id and cn_server -->
+    <request subst="true">
+        <dyn_variable name="session_id" jsonpath="session_id"></dyn_variable>
+        <dyn_variable name="cn_server" jsonpath="cn_server"></dyn_variable>
+        <dyn_variable name="my_token" jsonpath="account_token"></dyn_variable>
+       <http url="%%tt_utils:login_url%%" method="GET" version="1.1"></http> 
+    </request>
+
+    <!-- GET account_setting -->
+    <request subst="true">
+       <http url="/cn%%_cn_server%%/account_settings?session_id=%%_session_id%%" method="GET" version="1.1">
+       </http>
+    </request>    
+    
+    <!-- GET roster -->
+    <request subst="true">
+       <http url="/cn%%_cn_server%%/roster?session_id=%%_session_id%%" method="GET" version="1.1">
+       </http>
+    </request> 
+
+    <!-- First poll with watermark 0 -->
+    <request subst="true">
+        <dyn_variable name="poll_response" jsonpath="" />
+        <http url="/cn%%_cn_server%%/poll?touch=1200" method="POST" version="1.1"
+              contents="session_id=%%_session_id%%&amp;watermark=0"
+              content_type="application/x-www-form-urlencoded"
+              >
+        </http>       
+    </request> 
+    
+    <!-- do poll in a loop -->
+    <for from="1" to ="100" incr="1" var="counter">
+        <setdynvars sourcetype="erlang" callback="tt_utils:get_watermark">
+            <var name="watermark" />
+        </setdynvars>
+        <request subst="true">
+            <dyn_variable name="poll_response" jsonpath="" />
+            <http url="/cn%%_cn_server%%/poll?touch=1200" method="POST" version="1.1"
+                contents="session_id=%%_session_id%%&amp;watermark=%%_watermark%%"
+                content_type="application/x-www-form-urlencoded">
+            </http>
+        </request>
+    </for>
+  </session>
+ </sessions>
+</tsung>

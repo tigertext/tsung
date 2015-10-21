@@ -24,5 +24,24 @@ Join the mailing-list:
 
 or use the tracker https://github.com/processone/tsung/issues
 
+## Install
+### Config with prefix
+In the tsung source directory, use mytsung as prefix folder, this will make a local installation of tsung 
+instead of a global copy.
+    ./configure --prefix=mytsung
+### Compile (make clean to clean up)
+    make
+### Install
+    make install
+## Run test
+    mytsung/bin/tsung -f test_config.xml start
+## Account credentials and tokens
+    There are two files test configure xml needs:
+    /tmp/perf_test_accounts.csv - login username/password
+    /tmp/perf_test_tokens.csv - list of account token used when posting messages
 
+## Generate reports
+After test run, go the the log folder, then run 
+    my_tsung/lib/tsung/bin/tsung_stats.pl
+open report.html to view the results.
 

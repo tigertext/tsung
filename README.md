@@ -43,5 +43,6 @@ instead of a global copy.
 ## Generate reports
 After test run, go the the log folder, then run 
     my_tsung/lib/tsung/bin/tsung_stats.pl
+    
 open report.html to view the results.
 

@@ -41,8 +41,8 @@ instead of a global copy.
     /tmp/perf_test_tokens.csv - list of account token used when posting messages
 
 ## Generate reports
-After test run, go the the log folder, then run
-    my_tsung/lib/tsung/bin/tsung_stats.pl
+After test run, go the the log folder, then run 
+my_tsung/lib/tsung/bin/tsung_stats.pl 
     
 open report.html to view the results.
 

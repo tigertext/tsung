@@ -64,19 +64,22 @@ message_url({_Pid, DynVars}) ->
 get_random_receiver(Sender) ->
     {ok, R} = ts_file_server:get_random_line(message_receivers),
     ?LOGF("sender is ~p, receiver: ~p~n", [Sender, R], ?DEB),
-    case R of 
+    Trimed_R = trim(R),
+    case Trimed_R of 
         Sender -> get_random_receiver(Sender);
-        _ -> R
+        _ -> Trimed_R 
     end.
 
 login_url({_Pid, DynVars}) ->
     {ok, Username} = ts_dynvars:lookup(username, DynVars),
     {ok, Password} = ts_dynvars:lookup(password, DynVars),
-    Url = ["{", "\"id\":", "\"", Username, "\", \"password\": \"", Password, "\", ", "\"ts\":", 
+    Updated_Password = trim(Password),
+    Url = ["{", "\"id\":", "\"", Username, "\", \"password\": \"", Updated_Password, "\", ", "\"ts\":", 
           integer_to_binary(ts()), "}"],
     Bin_Url = erlang:iolist_to_binary(Url),
     "/cn/connect?req=" ++ edoc_lib:escape_uri(binary_to_list(Bin_Url)).
 
+trim(Token) -> binary:replace(Token, [<<"\r">>, <<"\n">>], <<>>, [global]). 
 
 get_watermark({_Pid, DynVars}) ->
     Current_Watermark = init_watermark(ts_dynvars:lookup(watermark, DynVars)),

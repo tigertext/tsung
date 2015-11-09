@@ -50,7 +50,7 @@
             <setdynvars sourcetype="value" value="25c06c5e-dfde-4d8b-961f-faa3f23b3d7b">
                 <var name="messaging_org"/>
             </setdynvars>
-            <setdynvars sourcetype="value" value="6919f3cc-0197-441a-aefe-bd171d560eb8">
+            <setdynvars sourcetype="value" value="GROUP_TOKEN_HERE">
                 <var name="group_token"/>
             </setdynvars>
             <!-- default message ttl 5 days -->

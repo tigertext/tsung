@@ -4,7 +4,7 @@
 
     <!-- Client side setup -->
     <clients>
-        <client host="localhost" use_controller_vm="true" maxusers="100"/>
+        <client host="localhost" use_controller_vm="true" maxusers="1000"/>
     </clients>
 
     <!-- Server side setup -->
@@ -50,7 +50,7 @@
             <setdynvars sourcetype="value" value="25c06c5e-dfde-4d8b-961f-faa3f23b3d7b">
                 <var name="messaging_org"/>
             </setdynvars>
-            <setdynvars sourcetype="value" value="GROUP_TOKEN_HERE">
+            <setdynvars sourcetype="value" value="8dfbe9f7-a421-4b09-8f34-79769b2059e4">
                 <var name="group_token"/>
             </setdynvars>
             <!-- default message ttl 5 days -->

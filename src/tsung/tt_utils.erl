@@ -5,7 +5,7 @@
 -author('gye@tigertext.com').
 
 -include("ts_macros.hrl").
--export([login_url/1, get_watermark/1, save_roster/1, message_url/1]).
+-export([login_url/1, get_watermark/1, save_roster/1, message_url/1, group_message_url/1]).
 -export([search_account/1, search_group/1, search_dist_list/1, store_for_validation/2]).
 -export([start_post_test_auditing/0]).
 start_post_test_auditing() ->
@@ -50,14 +50,52 @@ message_url({_Pid, DynVars}) ->
     Receiver = get_random_receiver(Sender),
     Time = now_for_timestamp(),
     Client_Id = uuid:to_string(uuid:srandom()),
-    Url = ["{", "\"body\": \"test\", ", "\"sender\":", "\"", Sender, "\",", "\"recipient\":", "\"", Receiver, "\",",  
-           "\"sender_organization\": \"", Organization, "\",", "\"recipient_organization\": \"", Organization, "\",",
-           "\"client_id\":\"", Client_Id, "\",", "\"dor\": \"0\",", 
-           "\"ttl\":", "\"", Ttl, "\",", "\"xmlns\": \"tigertext:iq:message\",",  
-           "\"status\": \"New\",", "\"ts\":", integer_to_binary(ts()), "}"],
+    Doc = {[
+        {<<"body">>, <<"test">>},
+        {<<"sender">>, Sender},
+        {<<"recipient">>, Receiver},
+        {<<"sender_organization">>, Organization},
+        {<<"recipient_organization">>, Organization},
+        {<<"client_id">>, Client_Id},
+        {<<"dor">>, <<"0">>},
+        {<<"ttl">>, Ttl},
+        {<<"xmlns">>, <<"tigertext:iq:group:message">>},
+        {<<"status">>, <<"New">>},
+        {<<"ts">>, integer_to_binary(ts())}
+    ]},
+    Url = mochijson2:encode(Doc),
     ?LOGF("url = ~p, session=~p~n", [Url, Session], ?DEB),
     Bin_Url = erlang:iolist_to_binary(Url),
     Final_Url = "/cn" ++ binary_to_list(Cn) ++ "/message?req=" ++ edoc_lib:escape_uri(binary_to_list(Bin_Url)) ++ "&session_id=" ++ binary_to_list(Session),
+    ?LOGF("final url = ~p~n", [Final_Url], ?DEB),
+    Final_Url.
+
+group_message_url({_Pid, DynVars}) ->
+    {ok, Ttl} = ts_dynvars:lookup(ttl, DynVars),
+    {ok, Cn} = ts_dynvars:lookup(cn_server, DynVars),
+    {ok, Organization} = ts_dynvars:lookup(messaging_org, DynVars),
+    {ok, Sender} = ts_dynvars:lookup(my_token, DynVars),
+    {ok, Session} = ts_dynvars:lookup(session_id, DynVars),
+    {ok, Cn} = ts_dynvars:lookup(cn_server, DynVars),
+    {ok, Group_Token} = ts_dynvars:lookup(group_token, DynVars),
+    Client_Id = uuid:to_string(uuid:srandom()),
+    Doc = {[
+        {<<"body">>, <<"test">>},
+        {<<"sender">>, Sender},
+        {<<"recipient">>, Group_Token},
+        {<<"sender_organization">>, Organization},
+        {<<"recipient_organization">>, Organization},
+        {<<"client_id">>, Client_Id},
+        {<<"dor">>, <<"0">>},
+        {<<"ttl">>, Ttl},
+        {<<"xmlns">>, <<"tigertext:iq:group:message">>},
+        {<<"status">>, <<"New">>},
+        {<<"ts">>, integer_to_binary(ts())}
+    ]},
+    Url = mochijson2:encode(Doc),
+    ?LOGF("url = ~p, session=~p~n", [Url, Session], ?DEB),
+    Bin_Url = erlang:iolist_to_binary(Url),
+    Final_Url = "/cn" ++ binary_to_list(Cn) ++ "/group_message?req=" ++ edoc_lib:escape_uri(binary_to_list(Bin_Url)) ++ "&session_id=" ++ binary_to_list(Session),
     ?LOGF("final url = ~p~n", [Final_Url], ?DEB),
     Final_Url.
 

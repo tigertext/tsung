@@ -1,4 +1,9 @@
+sudo: required
 language: erlang
+
+services:
+  - docker
+
 otp_release:
    - 17.1
    - R16B03-1
